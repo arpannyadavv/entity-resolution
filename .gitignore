@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+
+# Models (large binary files - don't push trained models)
+code/business_entity_resolution/models/*.pkl
+code/business_entity_resolution/models/*.json
+code/business_entity_resolution/plots/*.png
+code/business_entity_resolution/plots/*.tsv
+
+# Output files (generated at runtime - can push final ones)
+# output/matching_results.tsv
+# output/candidate_pairs.tsv
+
+# Dataset (large files - don't push raw data)
+dataset/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
