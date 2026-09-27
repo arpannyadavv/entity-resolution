@@ -31,6 +31,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+from rapidfuzz import fuzz as rfuzz
 
 # Local modules
 from src.preprocess import clean_name, clean_address
@@ -369,6 +370,7 @@ def run_prediction_pipeline():
                 valid_cands = [c for c in cands if c in cand_lookup]
                 chunk_candidates[s1_id] = valid_cands
 
+                s1_clean_n = clean_name(s1_tuple[1])
                 s1_dict = {
                     'entity_id': s1_tuple[0],
                     'business_name': s1_tuple[1],
@@ -377,6 +379,9 @@ def run_prediction_pipeline():
                 }
                 for cand_id in valid_cands:
                     cand_dict = cand_lookup[cand_id]
+                    cand_clean_n = clean_name(cand_dict['business_name'])
+                    if rfuzz.ratio(s1_clean_n, cand_clean_n) < 25 and (s1_clean_n not in cand_clean_n and cand_clean_n not in s1_clean_n):
+                        continue
                     feats = compute_pair_features(s1_dict, cand_dict)
                     chunk_X.append([feats[f] for f in feature_names])
                     chunk_pairs.append((s1_id, cand_id))

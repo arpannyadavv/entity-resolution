@@ -9,6 +9,7 @@ Step 1: Preprocessing & Normalization (v2 - Enhanced)
 
 import re
 import unicodedata
+from functools import lru_cache
 
 # ---------------------------------------------------------------------------
 # Legal suffix lookup (order matters: longer patterns first)
@@ -169,6 +170,7 @@ _ADDR_PATTERNS = [(re.compile(p, re.IGNORECASE), r) for p, r in ADDRESS_ABBR]
 # Core normalization
 # ---------------------------------------------------------------------------
 
+@lru_cache(maxsize=131072)
 def normalize_unicode(text: str) -> str:
     """Convert unicode to closest ASCII."""
     if not isinstance(text, str):
@@ -181,6 +183,7 @@ def normalize_unicode(text: str) -> str:
     return text
 
 
+@lru_cache(maxsize=131072)
 def clean_name(name: str) -> str:
     """
     Normalize business name:
@@ -249,6 +252,7 @@ def get_addr_keys(address: str, country: str) -> list:
     return keys
 
 
+@lru_cache(maxsize=131072)
 def clean_address(address: str) -> str:
     """
     Normalize business address:

@@ -20,6 +20,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 import re
+import difflib
 import jellyfish
 import numpy as np
 from rapidfuzz import fuzz as rfuzz
@@ -136,27 +137,16 @@ def acronym_similarity(a: str, b: str) -> float:
 
 def lcs_ratio(a: str, b: str) -> float:
     """
-    Longest Common Substring ratio relative to min length.
-    Computed on space-stripped strings.
+    Longest Common Substring ratio relative to max length.
+    Computed on space-stripped strings using fast C-accelerated SequenceMatcher.
     """
-    a = re.sub(r'\s+', '', a)
-    b = re.sub(r'\s+', '', b)
+    a = a.replace(' ', '')
+    b = b.replace(' ', '')
     if not a or not b:
         return 0.0
-    mn_len = min(len(a), len(b))
     mx_len = max(len(a), len(b))
-    # DP
-    best = 0
-    prev = [0] * (len(b) + 1)
-    for i in range(1, len(a) + 1):
-        curr = [0] * (len(b) + 1)
-        for j in range(1, len(b) + 1):
-            if a[i - 1] == b[j - 1]:
-                curr[j] = prev[j - 1] + 1
-                if curr[j] > best:
-                    best = curr[j]
-        prev = curr
-    return best / mx_len if mx_len > 0 else 0.0
+    m = difflib.SequenceMatcher(None, a, b).find_longest_match(0, len(a), 0, len(b))
+    return m.size / mx_len if mx_len > 0 else 0.0
 
 
 def number_overlap(addr1: str, addr2: str) -> float:
