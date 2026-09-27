@@ -193,12 +193,13 @@ class EntityMatcher:
         xgb_params = dict(self.XGB_PARAMS)
         xgb_params['scale_pos_weight'] = spw
         eval_set_xgb = [(X_val, y_val)] if (X_val is not None) else None
+        if eval_set_xgb:
+            xgb_params['early_stopping_rounds'] = 100
         self.xgb_model = xgb.XGBClassifier(**xgb_params)
         self.xgb_model.fit(
             X_train, y_train,
             eval_set=eval_set_xgb,
-            verbose=False,
-            early_stopping_rounds=100 if eval_set_xgb else None
+            verbose=False
         )
         best_xgb = getattr(self.xgb_model, 'best_iteration', 'N/A')
         print(f"  XGB best iteration: {best_xgb}")
@@ -223,7 +224,7 @@ class EntityMatcher:
         probas = self.predict_proba(X_val)
         best_t, best_f05, curve_df = find_optimal_threshold(probas, y_val, val_pair_ids)
         self.threshold = best_t
-        print(f"  Optimal threshold: {best_t:.2f} → F_0.5 = {best_f05:.4f}")
+        print(f"  Optimal threshold: {best_t:.2f} -> F_0.5 = {best_f05:.4f}")
         return best_t, best_f05, curve_df
 
     def feature_importance(self) -> pd.DataFrame:

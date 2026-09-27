@@ -67,6 +67,7 @@ def build_training_pairs(
     s2_lookup   = build_lookup(s2)
     s3_lookup   = build_lookup(s3)
     cand_lookup = {**s2_lookup, **s3_lookup}
+    cand_keys = list(cand_lookup.keys())
 
     # Parse ground truth
     gt = gt.copy()
@@ -116,11 +117,15 @@ def build_training_pairs(
 
         neg_cands_hard = random.sample(neg_pool_hard, n_hard) if n_hard > 0 else []
 
-        # Easy negatives: random from all candidates not in true matches
-        easy_pool = [mid for mid in cand_lookup if mid not in true_matches
-                     and mid not in set(neg_cands_hard)]
-        n_easy = min(len(easy_pool), n_easy)
-        neg_cands_easy = random.sample(easy_pool, n_easy) if n_easy > 0 else []
+        neg_cands_easy = []
+        if n_easy > 0 and cand_keys:
+            exclude = true_matches | set(neg_cands_hard)
+            attempts = 0
+            while len(neg_cands_easy) < n_easy and attempts < n_easy * 6:
+                attempts += 1
+                pick = cand_keys[random.randint(0, len(cand_keys) - 1)]
+                if pick not in exclude and pick not in neg_cands_easy:
+                    neg_cands_easy.append(pick)
 
         neg_cands = neg_cands_hard + neg_cands_easy
 

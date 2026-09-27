@@ -195,10 +195,58 @@ def clean_name(name: str) -> str:
     text = normalize_unicode(name)
     text = text.lower().strip()
     text = re.sub(r'[^\w\s&]', ' ', text)
+    text = re.sub(r'\b(www|https?|http)\b', ' ', text)
+    text = re.sub(r'\b(com|org|net|gov|edu|info)\b', ' ', text)
     for pat, repl in _SUFFIX_PATTERNS:
         text = pat.sub(repl, text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
+
+
+def normalize_name_variants(name: str) -> list:
+    """Generate canonical name variants:
+    - Stripped of honorifics (M/s, Sri, Shri, Shree, Dr, etc.)
+    - Split around DBA / AKA expressions (e.g. 'Korbrixx D.B.A. Obsidian LLC' -> 'obsidian llc')
+    """
+    c = clean_name(name)
+    if not c:
+        return []
+    # Strip honorific prefixes
+    c_stripped = re.sub(r'^(m\s*s\b|sri\b|shri\b|shree\b|dr\b|mr\b|prof\b)\s*', '', c)
+    # Split around dba / aka
+    parts = re.split(r'\b(dba|d\s*b\s*a|aka|t\s*a|trading\s+as)\b', c_stripped)
+    variants = [c, c_stripped]
+    if len(parts) > 1:
+        variants.append(parts[-1].strip())
+        variants.append(parts[0].strip())
+    # Return unique non-empty variants
+    seen = set()
+    res = []
+    for v in variants:
+        v_clean = re.sub(r'\s+', ' ', v).strip()
+        if v_clean and v_clean not in seen:
+            seen.add(v_clean)
+            res.append(v_clean)
+    return res
+
+
+def get_addr_keys(address: str, country: str) -> list:
+    """Extract physical address blocking keys (ZIP code, street number + street token)."""
+    if not isinstance(address, str) or not address.strip():
+        return []
+    cc = str(country).lower().strip()[:2] if isinstance(country, str) else 'xx'
+    keys = []
+    zc = extract_zipcode(address)
+    if zc:
+        keys.append(f"zip_{zc}")
+    c_addr = clean_address(address)
+    nums = extract_numbers(address)
+    words = [w for w in c_addr.split() if len(w) >= 4 and not w.isdigit()]
+    if nums and words:
+        keys.append(f"addr_{cc}_{nums[0]}_{words[0]}")
+        if len(words) > 1:
+            keys.append(f"addr_{cc}_{nums[0]}_{words[1]}")
+    return keys
 
 
 def clean_address(address: str) -> str:
